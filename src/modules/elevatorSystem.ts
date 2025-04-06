@@ -74,8 +74,7 @@ class ElevatorSystem {
                 const { floor, direction, passengers } = this.generateAutoRequest();
                 const destination = this.generateDestination(floor, direction as 'up' | 'down');
 
-                this.addExternalRequest(floor, direction as 'up' | 'down'
-                    , passengers);
+                this.addExternalRequest(floor, direction as 'up' | 'down', passengers);
                 this.addInternalRequest(destination, passengers);
             }
 
@@ -135,19 +134,49 @@ class ElevatorSystem {
         this.assignRequest(request);
     }
 
-    public addInternalRequest(floor: number, passengers: number) {
+    public addInternalRequest(floor: number, passengers: number, elevatorId?: number) {
         const request: Request = {
             id: uuidv4(),
             type: 'internal',
             floor,
             timestamp: Date.now(),
-            status: 'waiting'
+            status: 'waiting',
+            passengers,
+            elevatorId
         };
         this.requests.push(request);
-        this.assignRequest(request);
+
+        // Fixed: If elevatorId is provided, directly assign to that elevator
+        if (elevatorId !== undefined) {
+            this.assignToSpecificElevator(request, elevatorId);
+        } else {
+            this.assignRequest(request);
+        }
+    }
+
+    // New method to assign a request to a specific elevator
+    private assignToSpecificElevator(request: Request, elevatorId: number) {
+        const elevator = this.elevators.find(el => el.id === elevatorId);
+        if (elevator) {
+            elevator.destinations.push(request.floor);
+            if (request.type === 'internal') {
+                elevator.internalRequests[request.floor] =
+                    (elevator.internalRequests[request.floor] || 0) +
+                    (request.passengers || 1);
+            }
+            this.processElevatorPath(elevator);
+            request.status = 'processing';
+            request.elevatorId = elevator.id;
+        }
     }
 
     private assignRequest(request: Request) {
+        // Fixed: If the request already has an elevatorId, use that elevator
+        if (request.elevatorId !== undefined) {
+            this.assignToSpecificElevator(request, request.elevatorId);
+            return;
+        }
+
         const bestElevator = this.findBestElevator(request);
         if (bestElevator) {
             bestElevator.destinations.push(request.floor);
@@ -218,6 +247,13 @@ class ElevatorSystem {
             if (elevator.destinations.length > 0) {
                 const nextFloor = elevator.destinations[0];
                 if (elevator.currentFloor === nextFloor) {
+                    // if elevator arrives at the destination and requests is in opposite direction then change direction
+                    if (elevator.direction === 'up' && elevator.currentFloor === this.totalFloors - 1) {
+                        elevator.direction = 'down';
+                    } else if (elevator.direction === 'down' && elevator.currentFloor === 0) {
+                        elevator.direction = 'up';
+                    }
+
                     this.handleArrival(elevator);
                 } else {
                     elevator.currentFloor += elevator.direction === 'up' ? 1 : -1;
@@ -275,6 +311,7 @@ class ElevatorSystem {
     private getProperQueue(elevator: Elevator, currentFloor: number): number {
         if (elevator.direction === 'down') return this.floors[currentFloor].downQueue;
         if (elevator.direction === 'up') return this.floors[currentFloor].upQueue;
+
         return Math.max(
             this.floors[currentFloor].upQueue,
             this.floors[currentFloor].downQueue

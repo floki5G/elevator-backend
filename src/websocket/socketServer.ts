@@ -30,7 +30,7 @@ export default function initWebSocketServer(port: number, elevatorSystem: Elevat
                     break;
                 case 'internal':
                     if (message.passengersOut) {
-                        elevatorSystem.addInternalRequest(message.floor, message.passengersOut);
+                        elevatorSystem.addInternalRequest(message.floor, message.passengersOut, message.elevatorId);
                     }
                     break;
                 case 'toggle-auto':
