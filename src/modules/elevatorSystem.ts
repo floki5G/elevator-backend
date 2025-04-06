@@ -12,7 +12,7 @@ class ElevatorSystem {
         peakMode: false
     };
 
-    private requestInterval?: NodeJS.Timeout;
+    private requestInterval?: NodeJS.Timeout | null = null;
     private isAutoGenerating = true;
     private peakConfig = {
         active: false,
@@ -64,7 +64,7 @@ class ElevatorSystem {
 
         this.requestInterval = setInterval(() => {
             if (cycleCount >= 100) {
-                clearInterval(this.requestInterval);
+                if (this.requestInterval) clearInterval(this.requestInterval);
                 this.requestInterval = null;
                 this.isAutoGenerating = false; // Stop auto generation after 100 cycles
                 return;
@@ -72,9 +72,10 @@ class ElevatorSystem {
 
             if (Math.random() < this.requestFrequency) {
                 const { floor, direction, passengers } = this.generateAutoRequest();
-                const destination = this.generateDestination(floor, direction);
+                const destination = this.generateDestination(floor, direction as 'up' | 'down');
 
-                this.addExternalRequest(floor, direction, passengers);
+                this.addExternalRequest(floor, direction as 'up' | 'down'
+                    , passengers);
                 this.addInternalRequest(destination, passengers);
             }
 

@@ -2,11 +2,11 @@
   "name": "elevator-backend",
   "version": "1.0.0",
   "description": "",
-  "main": "server.ts",
+  "main": "dist/server.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node -r dotenv/config server.ts",
-    "dev": "nodemon -r dotenv/config server.ts",
+    "start": "node dist/server.js",
+    "dev": "ts-node -r dotenv/config server.ts",
     "build": "tsc"
   },
   "keywords": [],
