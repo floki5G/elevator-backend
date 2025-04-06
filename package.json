@@ -5,9 +5,9 @@
   "main": "dist/server.js",
   "type": "commonjs",
   "scripts": {
+    "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "ts-node -r dotenv/config server.ts",
-    "build": "tsc"
+    "dev": "ts-node -r dotenv/config server.ts"
   },
   "keywords": [],
   "author": "",
